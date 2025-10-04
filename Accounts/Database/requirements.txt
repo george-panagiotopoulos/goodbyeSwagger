@@ -1,0 +1,8 @@
+# Python dependencies for Database layer
+
+# Testing
+pytest==7.4.3
+pytest-cov==4.1.0
+
+# No additional dependencies needed for SQLite (built-in to Python)
+# Future dependencies can be added as needed

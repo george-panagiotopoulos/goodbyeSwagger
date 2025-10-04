@@ -1,0 +1,47 @@
+[package]
+name = "accounts_api"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Web framework
+actix-web = "4.9"
+actix-cors = "0.7"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Date/Time
+chrono = { version = "0.4", features = ["serde"] }
+
+# Decimal arithmetic
+rust_decimal = { version = "1.33", features = ["serde"] }
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Authentication
+jsonwebtoken = "9.3"
+bcrypt = "0.15"
+
+# Logging
+env_logger = "0.11"
+log = "0.4"
+
+# Environment variables
+dotenv = "0.15"
+
+# UUID
+uuid = { version = "1.6", features = ["v4", "serde"] }
+
+# Application layer
+accounts_application = { path = "../Application" }
+
+[dev-dependencies]
+actix-rt = "2.10"
+
+[[bin]]
+name = "accounts_api"
+path = "src/main.rs"
