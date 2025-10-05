@@ -181,6 +181,8 @@ impl ProductRepository {
             minimum_balance_for_interest,
             monthly_maintenance_fee,
             transaction_fee,
+            overdraft_allowed: false,  // Default for now - TODO: add to schema
+            overdraft_limit: Decimal::ZERO,  // Default for now - TODO: add to schema
             created_at,
             updated_at,
             created_by: None,

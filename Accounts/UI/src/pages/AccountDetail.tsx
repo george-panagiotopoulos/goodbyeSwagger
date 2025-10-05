@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { accountService } from '../services/accountService';
 import type { Account } from '../types/account';
 import type { Transaction } from '../types/transaction';
+import TransactionForm from '../components/TransactionForm';
 
 export default function AccountDetail() {
   const { id } = useParams<{ id: string }>();
@@ -10,6 +11,7 @@ export default function AccountDetail() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -30,6 +32,14 @@ export default function AccountDetail() {
       setError(err.response?.data?.error?.message || 'Failed to load account');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleTransactionCreated = async (_newTransaction: Transaction) => {
+    setShowForm(false);
+    // Reload account data to get updated balance and transaction list
+    if (id) {
+      await loadAccountData(id);
     }
   };
 
@@ -68,7 +78,24 @@ export default function AccountDetail() {
         </div>
       </div>
 
-      <h2>Transaction History</h2>
+      <div className="page-header">
+        <h2>Transaction History</h2>
+        <button onClick={() => setShowForm(!showForm)} className="btn-primary">
+          {showForm ? 'Cancel' : 'New Transaction'}
+        </button>
+      </div>
+
+      {showForm && (
+        <div className="form-container">
+          <TransactionForm
+            accountId={account.account_id}
+            accountCurrency={account.currency}
+            onSuccess={handleTransactionCreated}
+            onCancel={() => setShowForm(false)}
+          />
+        </div>
+      )}
+
       <table className="transactions-table">
         <thead>
           <tr>

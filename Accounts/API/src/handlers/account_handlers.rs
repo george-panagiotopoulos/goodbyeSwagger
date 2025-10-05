@@ -1,11 +1,12 @@
 use actix_web::{web, HttpResponse, Result};
-use accounts_application::repositories::{AccountRepository, TransactionRepository};
+use accounts_application::repositories::{AccountRepository, TransactionRepository, ProductRepository};
 use accounts_application::domain::account::Account;
 use accounts_application::domain::transaction::{Transaction, TransactionType, TransactionCategory};
 use crate::app_state::AppState;
 use crate::models::common::ApiResponse;
 use crate::models::account_models::*;
 use rust_decimal::Decimal;
+use std::str::FromStr;
 
 pub async fn list_accounts(state: web::Data<AppState>) -> Result<HttpResponse> {
     let repo = AccountRepository::new(&state.db_path)
@@ -72,31 +73,55 @@ pub async fn create_account(
     state: web::Data<AppState>,
     req: web::Json<CreateAccountRequest>,
 ) -> Result<HttpResponse> {
+    // Get product to retrieve currency
+    let product_repo = ProductRepository::new(&state.db_path)
+        .map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
+
+    let product = product_repo
+        .find_by_id(&req.product_id)
+        .map_err(|e| actix_web::error::ErrorInternalServerError(e))?
+        .ok_or_else(|| actix_web::error::ErrorBadRequest(format!("Product {} not found", req.product_id)))?;
+
+    // Parse opening balance
+    let opening_balance = Decimal::from_str(&req.opening_balance)
+        .map_err(|e| actix_web::error::ErrorBadRequest(format!("Invalid opening balance: {}", e)))?;
+
+    // Generate account number (YYYYNNNNN format)
+    let year = chrono::Utc::now().format("%Y").to_string();
+    let account_repo = AccountRepository::new(&state.db_path)
+        .map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
+
+    // Get count of accounts to generate next number
+    let account_count = account_repo
+        .list_active()
+        .map_err(|e| actix_web::error::ErrorInternalServerError(e))?
+        .len();
+
+    let account_number = format!("{}{:05}", year, account_count + 1);
+
+    // Create account with proper currency from product
     let account = Account::new(
-        req.account_number.clone(),
+        account_number,
         req.customer_id.clone(),
         req.product_id.clone(),
-        req.currency.clone(),
-        req.opening_balance,
+        product.currency.clone(),
+        opening_balance,
         None, // created_by - TODO: get from auth context
     )
     .map_err(|e| actix_web::error::ErrorBadRequest(e))?;
 
-    let repo = AccountRepository::new(&state.db_path)
+    account_repo.create(&account)
         .map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
 
-    repo.create(&account)
-        .map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
-
-    // Create opening transaction
-    if req.opening_balance > Decimal::ZERO {
+    // Create opening transaction if balance > 0
+    if opening_balance > Decimal::ZERO {
         let transaction = Transaction::new(
             account.account_id.clone(),
             TransactionType::Credit,
             TransactionCategory::Opening,
-            req.opening_balance,
-            req.currency.clone(),
-            req.opening_balance, // running balance
+            opening_balance,
+            product.currency.clone(),
+            opening_balance, // running balance = opening balance for first transaction
             "Opening balance".to_string(),
             Some("OPENING".to_string()),
             "API".to_string(),
@@ -143,17 +168,33 @@ pub async fn debit_account(
         .map_err(|e| actix_web::error::ErrorInternalServerError(e))?
         .ok_or_else(|| actix_web::error::ErrorNotFound(format!("Account {} not found", account_id)))?;
 
-    // Debit the account
+    // Get product to check transaction fee
+    let product_repo = ProductRepository::new(&state.db_path)
+        .map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
+
+    let product = product_repo
+        .find_by_id(&account.product_id)
+        .map_err(|e| actix_web::error::ErrorInternalServerError(e))?
+        .ok_or_else(|| actix_web::error::ErrorInternalServerError("Product not found for account"))?;
+
+    // Calculate total debit including transaction fee
+    let transaction_fee = product.transaction_fee;
+    let total_debit = req.amount + transaction_fee;
+
+    // Check sufficient balance for amount + fee
+    if account.balance < total_debit {
+        return Err(actix_web::error::ErrorBadRequest(format!(
+            "Insufficient balance: available {}, required {} (including {} transaction fee)",
+            account.balance, total_debit, transaction_fee
+        )));
+    }
+
+    // Debit the account for withdrawal amount
     account
         .debit(req.amount)
         .map_err(|e| actix_web::error::ErrorBadRequest(e))?;
 
-    // Update account in database
-    account_repo
-        .update(&account)
-        .map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
-
-    // Create transaction record
+    // Create withdrawal transaction record
     let transaction = Transaction::new(
         account.account_id.clone(),
         TransactionType::Debit,
@@ -172,6 +213,37 @@ pub async fn debit_account(
         .map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
     txn_repo
         .create(&transaction)
+        .map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
+
+    // Apply transaction fee if > 0
+    if transaction_fee > Decimal::ZERO {
+        account
+            .debit(transaction_fee)
+            .map_err(|e| actix_web::error::ErrorInternalServerError(format!("Failed to apply transaction fee: {}", e)))?;
+
+        // Create fee transaction record
+        let fee_transaction = Transaction::new(
+            account.account_id.clone(),
+            TransactionType::Debit,
+            TransactionCategory::Fee,
+            transaction_fee,
+            account.currency.clone(),
+            account.balance,
+            "Transaction fee".to_string(),
+            req.reference.clone(),
+            "API".to_string(),
+            None,
+        )
+        .map_err(|e| actix_web::error::ErrorBadRequest(e))?;
+
+        txn_repo
+            .create(&fee_transaction)
+            .map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
+    }
+
+    // Update account in database with final balance
+    account_repo
+        .update(&account)
         .map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
 
     let response = AccountResponse {

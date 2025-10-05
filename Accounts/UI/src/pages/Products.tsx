@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { productService } from '../services/productService';
 import type { Product } from '../types/product';
+import ProductForm from '../components/ProductForm';
 
 export default function Products() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
     loadProducts();
@@ -23,12 +25,32 @@ export default function Products() {
     }
   };
 
+  const handleProductCreated = (newProduct: Product) => {
+    setProducts([...products, newProduct]);
+    setShowForm(false);
+  };
+
   if (loading) return <div>Loading products...</div>;
   if (error) return <div className="error">{error}</div>;
 
   return (
     <div className="products-page">
-      <h1>Products</h1>
+      <div className="page-header">
+        <h1>Products</h1>
+        <button onClick={() => setShowForm(!showForm)} className="btn-primary">
+          {showForm ? 'Cancel' : 'Create New Product'}
+        </button>
+      </div>
+
+      {showForm && (
+        <div className="form-container">
+          <ProductForm
+            onSuccess={handleProductCreated}
+            onCancel={() => setShowForm(false)}
+          />
+        </div>
+      )}
+
       <div className="products-grid">
         {products.map((product) => (
           <div key={product.product_id} className="product-card">

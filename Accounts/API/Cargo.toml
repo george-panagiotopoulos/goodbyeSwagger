@@ -7,6 +7,7 @@ edition = "2021"
 # Web framework
 actix-web = "4.9"
 actix-cors = "0.7"
+actix-web-httpauth = "0.8"
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
@@ -35,6 +36,9 @@ dotenv = "0.15"
 
 # UUID
 uuid = { version = "1.6", features = ["v4", "serde"] }
+
+# Database
+rusqlite = { version = "0.31", features = ["bundled"] }
 
 # Application layer
 accounts_application = { path = "../Application" }

@@ -1,0 +1,879 @@
+openapi: 3.0.3
+info:
+  title: Account Processing System API
+  description: |
+    RESTful API for managing checking/current accounts with comprehensive transaction processing,
+    interest calculation, and fee management capabilities.
+
+    ## Features
+    - **Account Management**: Create and manage customer accounts
+    - **Transaction Processing**: Credit and debit operations with full ledger tracking
+    - **Interest Calculation**: Automated monthly interest accrual using 30/360 convention
+    - **Fee Management**: Transaction fees and monthly maintenance charges
+    - **Batch Processing**: End-of-month processing for interest and fees
+    - **Product Configuration**: Flexible product setup with customizable rates and fees
+
+    ## Authentication
+    All endpoints (except /health and /api/auth/*) require JWT Bearer token authentication.
+    Obtain a token by calling POST /api/auth/login with valid credentials.
+
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@accountprocessing.example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:6600
+    description: Development server
+  - url: http://localhost:6600/api
+    description: Development server (with /api prefix)
+
+tags:
+  - name: Health
+    description: System health and status endpoints
+  - name: Authentication
+    description: User authentication and authorization
+  - name: Products
+    description: Product configuration and management
+  - name: Customers
+    description: Customer information management
+  - name: Accounts
+    description: Account management and operations
+  - name: Transactions
+    description: Transaction processing and ledger
+  - name: Batch
+    description: Batch processing operations
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from /api/auth/login
+
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Indicates if the request was successful
+        data:
+          type: object
+          description: Response payload
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+
+    Product:
+      type: object
+      properties:
+        product_id:
+          type: string
+          example: "PROD-001"
+        product_code:
+          type: string
+          example: "STD_CHECKING"
+        product_name:
+          type: string
+          example: "Standard Checking Account"
+        description:
+          type: string
+          example: "Basic checking account with interest"
+        currency:
+          type: string
+          example: "USD"
+          pattern: "^[A-Z]{3}$"
+        interest_rate:
+          type: number
+          format: decimal
+          example: 0.025
+          description: "Annual interest rate (e.g., 0.025 = 2.5%)"
+        minimum_balance_for_interest:
+          type: number
+          format: decimal
+          example: 1000.00
+        monthly_maintenance_fee:
+          type: number
+          format: decimal
+          example: 5.00
+        transaction_fee:
+          type: number
+          format: decimal
+          example: 0.50
+        status:
+          type: string
+          enum: [Active, Inactive]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateProductRequest:
+      type: object
+      required:
+        - product_name
+        - currency
+      properties:
+        product_code:
+          type: string
+          example: "PREMIUM_SAVINGS"
+        product_name:
+          type: string
+          example: "Premium Savings Account"
+        description:
+          type: string
+          example: "High-yield savings account"
+        currency:
+          type: string
+          example: "USD"
+        interest_rate:
+          type: string
+          example: "0.035"
+        minimum_balance_for_interest:
+          type: string
+          example: "5000.00"
+        monthly_maintenance_fee:
+          type: string
+          example: "10.00"
+        transaction_fee:
+          type: string
+          example: "1.00"
+
+    Customer:
+      type: object
+      properties:
+        customer_id:
+          type: string
+          example: "CUST-001"
+        external_customer_id:
+          type: string
+          example: "EXT-12345"
+        customer_name:
+          type: string
+          example: "Alice Johnson"
+        customer_type:
+          type: string
+          enum: [Individual, Corporate]
+        email:
+          type: string
+          format: email
+          example: "alice.johnson@example.com"
+        phone:
+          type: string
+          example: "+1-555-0101"
+        status:
+          type: string
+          enum: [Active, Inactive, Suspended]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateCustomerRequest:
+      type: object
+      required:
+        - customer_name
+        - customer_type
+      properties:
+        external_customer_id:
+          type: string
+          example: "EXT-12345"
+        customer_name:
+          type: string
+          example: "Bob Smith"
+        customer_type:
+          type: string
+          enum: [Individual, Corporate]
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+
+    Account:
+      type: object
+      properties:
+        account_id:
+          type: string
+          example: "ACC-ca347c63-9969-4920-851c-05ca574edab4"
+        account_number:
+          type: string
+          example: "2025000001"
+        customer_id:
+          type: string
+          example: "CUST-001"
+        product_id:
+          type: string
+          example: "PROD-001"
+        currency:
+          type: string
+          example: "USD"
+        status:
+          type: string
+          enum: [Active, Closed]
+        balance:
+          type: number
+          format: decimal
+          example: 12522.35
+        interest_accrued:
+          type: number
+          format: decimal
+          example: 21.85
+        opening_date:
+          type: string
+          format: date
+          example: "2025-08-31"
+        closing_date:
+          type: string
+          format: date
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateAccountRequest:
+      type: object
+      required:
+        - customer_id
+        - product_id
+        - opening_balance
+      properties:
+        customer_id:
+          type: string
+          example: "CUST-001"
+        product_id:
+          type: string
+          example: "PROD-001"
+        opening_balance:
+          type: string
+          example: "1000.00"
+
+    Transaction:
+      type: object
+      properties:
+        transaction_id:
+          type: string
+          example: "TXN-79da9f3d-590b-4c80-ba6c-1326c315bec6"
+        transaction_type:
+          type: string
+          enum: [Credit, Debit]
+        category:
+          type: string
+          enum: [Deposit, Withdrawal, Fee, Interest, Opening]
+        amount:
+          type: number
+          format: decimal
+          example: 100.50
+        running_balance:
+          type: number
+          format: decimal
+          example: 1234.56
+        description:
+          type: string
+          example: "Monthly interest - 2025-10 (30/360)"
+        reference:
+          type: string
+          example: "2025-10"
+        transaction_date:
+          type: string
+          format: date-time
+
+    TransactionRequest:
+      type: object
+      required:
+        - amount
+        - description
+      properties:
+        amount:
+          type: number
+          format: decimal
+          example: 500.00
+        description:
+          type: string
+          example: "Salary deposit"
+        reference:
+          type: string
+          example: "PAYROLL-2025-10"
+
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          example: "testuser"
+        password:
+          type: string
+          format: password
+          example: "password123"
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        user:
+          type: object
+          properties:
+            user_id:
+              type: string
+            username:
+              type: string
+            full_name:
+              type: string
+            email:
+              type: string
+            role:
+              type: string
+
+    RunAccrualsRequest:
+      type: object
+      properties:
+        month:
+          type: string
+          example: "2025-10"
+          description: "Target month in YYYY-MM format. Defaults to current month."
+        dry_run:
+          type: boolean
+          example: false
+          description: "If true, simulates the process without making changes"
+
+    RunAccrualsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        accounts_processed:
+          type: integer
+          example: 6
+        months_processed:
+          type: integer
+          example: 11
+        total_interest:
+          type: number
+          format: decimal
+          example: 258.07
+        results:
+          type: array
+          items:
+            type: object
+        output:
+          type: string
+
+    AccrualHistoryItem:
+      type: object
+      properties:
+        monthly_accrual_id:
+          type: string
+        account_id:
+          type: string
+        account_number:
+          type: string
+        accrual_month:
+          type: string
+          example: "2025-10"
+        posting_date:
+          type: string
+          format: date
+        month_end_balance:
+          type: number
+          format: decimal
+        annual_interest_rate:
+          type: number
+          format: decimal
+        monthly_interest:
+          type: number
+          format: decimal
+        processing_date:
+          type: string
+          format: date-time
+        processing_status:
+          type: string
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Check if the API server is running and healthy
+      responses:
+        '200':
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /api/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Authenticate user and receive JWT token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+
+  /api/products:
+    get:
+      tags:
+        - Products
+      summary: List all products
+      description: Retrieve a list of all products in the system
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Product'
+        '401':
+          description: Unauthorized
+
+    post:
+      tags:
+        - Products
+      summary: Create a new product
+      description: Create a new product configuration
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProductRequest'
+      responses:
+        '200':
+          description: Product created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Product'
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+
+  /api/products/{id}:
+    get:
+      tags:
+        - Products
+      summary: Get product by ID
+      description: Retrieve detailed information about a specific product
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "PROD-001"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Product'
+        '404':
+          description: Product not found
+        '401':
+          description: Unauthorized
+
+  /api/customers:
+    get:
+      tags:
+        - Customers
+      summary: List all customers
+      description: Retrieve a list of all customers
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Customer'
+
+    post:
+      tags:
+        - Customers
+      summary: Create a new customer
+      description: Register a new customer in the system
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCustomerRequest'
+      responses:
+        '200':
+          description: Customer created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Customer'
+
+  /api/customers/{id}:
+    get:
+      tags:
+        - Customers
+      summary: Get customer by ID
+      description: Retrieve detailed information about a specific customer
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "CUST-001"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Customer'
+        '404':
+          description: Customer not found
+
+  /api/accounts:
+    get:
+      tags:
+        - Accounts
+      summary: List all accounts
+      description: Retrieve a list of all accounts
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Account'
+
+    post:
+      tags:
+        - Accounts
+      summary: Create a new account
+      description: Open a new account for a customer
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAccountRequest'
+      responses:
+        '200':
+          description: Account created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Account'
+
+  /api/accounts/{id}:
+    get:
+      tags:
+        - Accounts
+      summary: Get account by ID
+      description: Retrieve detailed information about a specific account
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "ACC-ca347c63-9969-4920-851c-05ca574edab4"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Account'
+        '404':
+          description: Account not found
+
+  /api/accounts/{id}/transactions:
+    get:
+      tags:
+        - Transactions
+      summary: Get account transactions
+      description: Retrieve transaction history for a specific account (last 50 transactions)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "ACC-ca347c63-9969-4920-851c-05ca574edab4"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Transaction'
+
+  /api/accounts/{id}/credit:
+    post:
+      tags:
+        - Transactions
+      summary: Credit account (deposit)
+      description: Add funds to an account
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "ACC-ca347c63-9969-4920-851c-05ca574edab4"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionRequest'
+      responses:
+        '200':
+          description: Credit successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Account'
+        '400':
+          description: Invalid request
+        '404':
+          description: Account not found
+
+  /api/accounts/{id}/debit:
+    post:
+      tags:
+        - Transactions
+      summary: Debit account (withdrawal)
+      description: Withdraw funds from an account. Transaction fee will be applied automatically.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "ACC-ca347c63-9969-4920-851c-05ca574edab4"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionRequest'
+      responses:
+        '200':
+          description: Debit successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Account'
+        '400':
+          description: Insufficient balance or invalid request
+        '404':
+          description: Account not found
+
+  /api/batch/monthly-accruals:
+    post:
+      tags:
+        - Batch
+      summary: Run monthly interest accruals
+      description: |
+        Execute monthly interest accrual batch process using 30/360 day count convention.
+
+        **Interest Calculation Formula:**
+        - Monthly Interest = (Balance × Annual Rate × 30) / 360
+        - Simplified: (Balance × Annual Rate) / 12
+
+        **Process:**
+        1. Scans all active accounts
+        2. Identifies months requiring processing (catch-up logic)
+        3. Checks minimum balance requirements
+        4. Calculates and posts interest on month-end date
+        5. Updates account balances
+        6. Records in monthly_interest_accruals table
+
+        **Features:**
+        - Idempotent: safe to run multiple times
+        - Historical catch-up: processes all missing months since account opening
+        - Month-end posting: interest posted on last day of each month
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RunAccrualsRequest'
+      responses:
+        '200':
+          description: Batch process completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunAccrualsResponse'
+
+  /api/batch/accrual-history:
+    get:
+      tags:
+        - Batch
+      summary: Get accrual history
+      description: Retrieve history of monthly interest accruals
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+          description: Maximum number of records to return
+        - name: account_id
+          in: query
+          schema:
+            type: string
+          description: Filter by account ID
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AccrualHistoryItem'

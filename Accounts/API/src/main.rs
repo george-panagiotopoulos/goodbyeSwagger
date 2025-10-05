@@ -1,11 +1,13 @@
 use actix_web::{middleware::Logger, web, App, HttpResponse, HttpServer};
 use actix_cors::Cors;
+use actix_web_httpauth::middleware::HttpAuthentication;
 use dotenv::dotenv;
 use std::env;
 
 mod handlers;
 mod models;
 mod app_state;
+mod middleware;
 
 use app_state::AppState;
 
@@ -43,6 +45,9 @@ async fn main() -> std::io::Result<()> {
             ])
             .max_age(3600);
 
+        // Authentication middleware
+        let auth = HttpAuthentication::bearer(middleware::auth::validator);
+
         App::new()
             .app_data(web::Data::new(app_state.clone()))
             .wrap(cors)
@@ -51,30 +56,49 @@ async fn main() -> std::io::Result<()> {
             .route("/health", web::get().to(health_check))
             .service(
                 web::scope("/api")
-                    // Product routes
+                    // Public authentication routes (no auth required)
                     .service(
-                        web::scope("/products")
-                            .route("", web::get().to(handlers::product_handlers::list_products))
-                            .route("", web::post().to(handlers::product_handlers::create_product))
-                            .route("/active", web::get().to(handlers::product_handlers::list_active_products))
-                            .route("/{id}", web::get().to(handlers::product_handlers::get_product))
+                        web::scope("/auth")
+                            .route("/login", web::post().to(handlers::auth_handlers::login))
+                            .route("/register", web::post().to(handlers::auth_handlers::register))
                     )
-                    // Customer routes
+                    // Protected routes (auth required)
                     .service(
-                        web::scope("/customers")
-                            .route("", web::get().to(handlers::customer_handlers::list_customers))
-                            .route("", web::post().to(handlers::customer_handlers::create_customer))
-                            .route("/{id}", web::get().to(handlers::customer_handlers::get_customer))
-                    )
-                    // Account routes
-                    .service(
-                        web::scope("/accounts")
-                            .route("", web::get().to(handlers::account_handlers::list_accounts))
-                            .route("", web::post().to(handlers::account_handlers::create_account))
-                            .route("/{id}", web::get().to(handlers::account_handlers::get_account))
-                            .route("/{id}/debit", web::post().to(handlers::account_handlers::debit_account))
-                            .route("/{id}/credit", web::post().to(handlers::account_handlers::credit_account))
-                            .route("/{id}/transactions", web::get().to(handlers::account_handlers::get_account_transactions))
+                        web::scope("")
+                            .wrap(auth)
+                            // Auth test route
+                            .route("/auth/me", web::get().to(handlers::auth_handlers::me))
+                            // Product routes
+                            .service(
+                                web::scope("/products")
+                                    .route("", web::get().to(handlers::product_handlers::list_products))
+                                    .route("", web::post().to(handlers::product_handlers::create_product))
+                                    .route("/active", web::get().to(handlers::product_handlers::list_active_products))
+                                    .route("/{id}", web::get().to(handlers::product_handlers::get_product))
+                            )
+                            // Customer routes
+                            .service(
+                                web::scope("/customers")
+                                    .route("", web::get().to(handlers::customer_handlers::list_customers))
+                                    .route("", web::post().to(handlers::customer_handlers::create_customer))
+                                    .route("/{id}", web::get().to(handlers::customer_handlers::get_customer))
+                            )
+                            // Account routes
+                            .service(
+                                web::scope("/accounts")
+                                    .route("", web::get().to(handlers::account_handlers::list_accounts))
+                                    .route("", web::post().to(handlers::account_handlers::create_account))
+                                    .route("/{id}", web::get().to(handlers::account_handlers::get_account))
+                                    .route("/{id}/debit", web::post().to(handlers::account_handlers::debit_account))
+                                    .route("/{id}/credit", web::post().to(handlers::account_handlers::credit_account))
+                                    .route("/{id}/transactions", web::get().to(handlers::account_handlers::get_account_transactions))
+                            )
+                            // Batch processing routes
+                            .service(
+                                web::scope("/batch")
+                                    .route("/monthly-accruals", web::post().to(handlers::batch_handlers::run_monthly_accruals))
+                                    .route("/accrual-history", web::get().to(handlers::batch_handlers::get_accrual_history))
+                            )
                     )
             )
     })

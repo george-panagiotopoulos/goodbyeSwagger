@@ -19,11 +19,9 @@ pub struct AccountResponse {
 
 #[derive(Debug, Deserialize)]
 pub struct CreateAccountRequest {
-    pub account_number: String,
     pub customer_id: String,
     pub product_id: String,
-    pub currency: String,
-    pub opening_balance: Decimal,
+    pub opening_balance: String, // Changed to String to match UI
 }
 
 #[derive(Debug, Deserialize)]

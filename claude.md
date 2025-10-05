@@ -261,3 +261,11 @@ This project showcases:
 - All references to "Temenos", "Modular Banking", or banking-specific terminology should be replaced with generic application concepts
 - This is a demonstration/showcase project, not a production banking system
 - Focus is on the **documentation pattern and RAG architecture**, not the specific business domain
+
+## Claude Code Instructions
+
+- **ALWAYS update `/About/Prompts_log.txt`** after each user prompt with:
+  - Date and timestamp
+  - User's request/prompt
+  - Summary of actions taken
+  - Any important decisions or context

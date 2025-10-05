@@ -1,0 +1,647 @@
+{
+  "info": {
+    "name": "Account Processing System API",
+    "description": "Complete API collection for Account Processing System with authentication and all endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "12345"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:6600",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "account_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "customer_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "product_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health & Auth",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set(\"jwt_token\", jsonData.token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "List All Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/products",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Product by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/products/{{product_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products", "{{product_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set(\"product_id\", jsonData.data.product_id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"product_code\": \"TEST_SAVINGS\",\n  \"product_name\": \"Test Savings Account\",\n  \"description\": \"High-yield savings account for testing\",\n  \"currency\": \"USD\",\n  \"interest_rate\": \"0.035\",\n  \"minimum_balance_for_interest\": \"5000.00\",\n  \"monthly_maintenance_fee\": \"10.00\",\n  \"transaction_fee\": \"1.00\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/products",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Customers",
+      "item": [
+        {
+          "name": "List All Customers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/customers",
+              "host": ["{{base_url}}"],
+              "path": ["api", "customers"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Customer by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/customers/{{customer_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "customers", "{{customer_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set(\"customer_id\", jsonData.data.customer_id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"external_customer_id\": \"EXT-TEST-001\",\n  \"customer_name\": \"Test Customer\",\n  \"customer_type\": \"Individual\",\n  \"email\": \"test.customer@example.com\",\n  \"phone\": \"+1-555-9999\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/customers",
+              "host": ["{{base_url}}"],
+              "path": ["api", "customers"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Accounts",
+      "item": [
+        {
+          "name": "List All Accounts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/accounts",
+              "host": ["{{base_url}}"],
+              "path": ["api", "accounts"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Account by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/accounts/{{account_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "accounts", "{{account_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set(\"account_id\", jsonData.data.account_id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer_id\": \"{{customer_id}}\",\n  \"product_id\": \"{{product_id}}\",\n  \"opening_balance\": \"10000.00\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/accounts",
+              "host": ["{{base_url}}"],
+              "path": ["api", "accounts"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Transactions",
+      "item": [
+        {
+          "name": "Get Account Transactions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/accounts/{{account_id}}/transactions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "accounts", "{{account_id}}", "transactions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Credit Account (Deposit)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 500.00,\n  \"description\": \"Salary deposit\",\n  \"reference\": \"PAYROLL-2025-10-05\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/accounts/{{account_id}}/credit",
+              "host": ["{{base_url}}"],
+              "path": ["api", "accounts", "{{account_id}}", "credit"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Debit Account (Withdrawal)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 100.00,\n  \"description\": \"ATM Withdrawal\",\n  \"reference\": \"ATM-2025-10-05\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/accounts/{{account_id}}/debit",
+              "host": ["{{base_url}}"],
+              "path": ["api", "accounts", "{{account_id}}", "debit"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Batch Processing",
+      "item": [
+        {
+          "name": "Run Monthly Accruals",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dry_run\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/batch/monthly-accruals",
+              "host": ["{{base_url}}"],
+              "path": ["api", "batch", "monthly-accruals"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Accrual History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/batch/accrual-history?limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "batch", "accrual-history"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Accrual History by Account",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/batch/accrual-history?account_id={{account_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "batch", "accrual-history"],
+              "query": [
+                {
+                  "key": "account_id",
+                  "value": "{{account_id}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Complete Workflow Example",
+      "item": [
+        {
+          "name": "1. Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set(\"jwt_token\", jsonData.token);",
+                  "console.log(\"✓ Token saved:\", jsonData.token.substring(0, 20) + \"...\");"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2. Create Product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set(\"product_id\", jsonData.data.product_id);",
+                  "console.log(\"✓ Product created:\", jsonData.data.product_id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"product_code\": \"WORKFLOW_TEST\",\n  \"product_name\": \"Workflow Test Account\",\n  \"description\": \"Testing complete workflow\",\n  \"currency\": \"USD\",\n  \"interest_rate\": \"0.025\",\n  \"minimum_balance_for_interest\": \"1000.00\",\n  \"monthly_maintenance_fee\": \"5.00\",\n  \"transaction_fee\": \"0.50\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/products",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3. Create Customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set(\"customer_id\", jsonData.data.customer_id);",
+                  "console.log(\"✓ Customer created:\", jsonData.data.customer_id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer_name\": \"Workflow Test User\",\n  \"customer_type\": \"Individual\",\n  \"email\": \"workflow.test@example.com\",\n  \"phone\": \"+1-555-WORKFLOW\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/customers",
+              "host": ["{{base_url}}"],
+              "path": ["api", "customers"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4. Open Account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set(\"account_id\", jsonData.data.account_id);",
+                  "console.log(\"✓ Account opened:\", jsonData.data.account_id);",
+                  "console.log(\"  Account Number:\", jsonData.data.account_number);",
+                  "console.log(\"  Opening Balance: $\" + jsonData.data.balance);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer_id\": \"{{customer_id}}\",\n  \"product_id\": \"{{product_id}}\",\n  \"opening_balance\": \"5000.00\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/accounts",
+              "host": ["{{base_url}}"],
+              "path": ["api", "accounts"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5. Deposit Funds",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 1000.00,\n  \"description\": \"Initial deposit\",\n  \"reference\": \"DEP-001\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/accounts/{{account_id}}/credit",
+              "host": ["{{base_url}}"],
+              "path": ["api", "accounts", "{{account_id}}", "credit"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6. Withdraw Funds",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 200.00,\n  \"description\": \"ATM withdrawal\",\n  \"reference\": \"ATM-001\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/accounts/{{account_id}}/debit",
+              "host": ["{{base_url}}"],
+              "path": ["api", "accounts", "{{account_id}}", "debit"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "7. View Transaction History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/accounts/{{account_id}}/transactions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "accounts", "{{account_id}}", "transactions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "8. Check Account Balance",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/accounts/{{account_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "accounts", "{{account_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

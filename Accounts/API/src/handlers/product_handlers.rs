@@ -80,6 +80,8 @@ pub async fn create_product(
         req.minimum_balance_for_interest,
         req.monthly_maintenance_fee,
         req.transaction_fee,
+        false, // overdraft_allowed - default to false for MVP
+        rust_decimal::Decimal::ZERO, // overdraft_limit - default to 0
         None, // created_by - TODO: get from auth context
     )
     .map_err(|e| actix_web::error::ErrorBadRequest(e))?;

@@ -50,6 +50,10 @@ pub struct Product {
     pub monthly_maintenance_fee: Decimal,
     pub transaction_fee: Decimal,
 
+    // Overdraft configuration
+    pub overdraft_allowed: bool,
+    pub overdraft_limit: Decimal,
+
     // Audit fields
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -67,6 +71,8 @@ impl Product {
         minimum_balance_for_interest: Decimal,
         monthly_maintenance_fee: Decimal,
         transaction_fee: Decimal,
+        overdraft_allowed: bool,
+        overdraft_limit: Decimal,
         created_by: Option<String>,
     ) -> Result<Self, String> {
         // Validation
@@ -91,6 +97,9 @@ impl Product {
         if transaction_fee < Decimal::ZERO {
             return Err("Transaction fee cannot be negative".to_string());
         }
+        if overdraft_limit < Decimal::ZERO {
+            return Err("Overdraft limit cannot be negative".to_string());
+        }
 
         let now = Utc::now();
         let product_id = format!("PROD-{}", uuid::Uuid::new_v4());
@@ -106,6 +115,8 @@ impl Product {
             minimum_balance_for_interest,
             monthly_maintenance_fee,
             transaction_fee,
+            overdraft_allowed,
+            overdraft_limit,
             created_at: now,
             updated_at: now,
             created_by,
