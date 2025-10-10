@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG System - AI Documentation Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        .message-content pre {
+            background-color: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            margin: 0.5rem 0;
+        }
+        .message-content code {
+            background-color: #1e293b;
+            color: #e2e8f0;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            font-family: 'Courier New', monospace;
+        }
+        .persona-card {
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .persona-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .persona-card.selected {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">🤖 RAG Documentation Assistant</h1>
+            <p class="text-gray-600">Choose a persona and ask questions about the Account Processing System</p>
+        </div>
+
+        <!-- Persona Selection -->
+        <div id="persona-section" class="mb-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Select Your Assistant</h2>
+            <div id="personas-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <!-- Personas will be loaded here -->
+                <div class="text-center py-12 col-span-full">
+                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                    <p class="mt-2 text-gray-600">Loading personas...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Interface -->
+        <div id="chat-section" class="hidden">
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <!-- Chat Header -->
+                <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-4 flex justify-between items-center">
+                    <div class="flex items-center">
+                        <span id="current-persona-avatar" class="text-3xl mr-3"></span>
+                        <div>
+                            <h3 id="current-persona-name" class="font-semibold text-lg"></h3>
+                            <p id="current-persona-desc" class="text-sm opacity-90"></p>
+                        </div>
+                    </div>
+                    <button onclick="changePersona()" class="bg-white text-blue-600 px-4 py-2 rounded-md hover:bg-blue-50 transition">
+                        Change Assistant
+                    </button>
+                </div>
+
+                <!-- Messages Area -->
+                <div id="messages-container" class="h-96 overflow-y-auto p-6 space-y-4 bg-gray-50">
+                    <div class="text-center text-gray-500 py-8">
+                        <p>Start a conversation by typing a message below</p>
+                    </div>
+                </div>
+
+                <!-- Input Area -->
+                <div class="bg-white border-t border-gray-200 p-4">
+                    <form id="chat-form" onsubmit="sendMessage(event)" class="flex gap-2">
+                        <input
+                            type="text"
+                            id="message-input"
+                            placeholder="Ask a question..."
+                            class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            required
+                        />
+                        <button
+                            type="submit"
+                            id="send-button"
+                            class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition disabled:bg-gray-400"
+                        >
+                            Send
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:6603/api';
+        let personas = [];
+        let currentPersona = null;
+        let conversationHistory = [];
+
+        // Load personas on page load
+        async function loadPersonas() {
+            try {
+                const response = await fetch(`${API_BASE}/personas`);
+                if (!response.ok) throw new Error('Failed to load personas');
+
+                personas = await response.json();
+                renderPersonas();
+            } catch (error) {
+                document.getElementById('personas-grid').innerHTML = `
+                    <div class="col-span-full text-center py-12">
+                        <p class="text-red-600 mb-2">❌ Error loading personas</p>
+                        <p class="text-sm text-gray-600">${error.message}</p>
+                        <button onclick="loadPersonas()" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                            Retry
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        function renderPersonas() {
+            const grid = document.getElementById('personas-grid');
+            grid.innerHTML = personas.map(persona => `
+                <div class="persona-card border-2 border-gray-200 rounded-lg p-4 ${currentPersona?.id === persona.id ? 'selected' : ''}"
+                     onclick="selectPersona('${persona.id}')">
+                    <div class="text-4xl mb-2">${persona.avatar}</div>
+                    <h3 class="font-semibold text-gray-900 mb-1">${persona.name}</h3>
+                    <p class="text-sm text-gray-600 line-clamp-2">${persona.description}</p>
+                </div>
+            `).join('');
+        }
+
+        function selectPersona(personaId) {
+            currentPersona = personas.find(p => p.id === personaId);
+            if (!currentPersona) return;
+
+            conversationHistory = [];
+
+            document.getElementById('current-persona-avatar').textContent = currentPersona.avatar;
+            document.getElementById('current-persona-name').textContent = currentPersona.name;
+            document.getElementById('current-persona-desc').textContent = currentPersona.description;
+
+            document.getElementById('persona-section').classList.add('hidden');
+            document.getElementById('chat-section').classList.remove('hidden');
+
+            document.getElementById('messages-container').innerHTML = `
+                <div class="text-center text-gray-500 py-8">
+                    <p>Start a conversation with ${currentPersona.name}</p>
+                </div>
+            `;
+
+            document.getElementById('message-input').focus();
+        }
+
+        function changePersona() {
+            document.getElementById('persona-section').classList.remove('hidden');
+            document.getElementById('chat-section').classList.add('hidden');
+            renderPersonas();
+        }
+
+        function addMessage(role, content, sources = []) {
+            const container = document.getElementById('messages-container');
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'}`;
+
+            const isUser = role === 'user';
+            const bgColor = isUser ? 'bg-blue-600 text-white' : 'bg-white text-gray-900';
+            const alignment = isUser ? 'text-right' : 'text-left';
+
+            let sourcesHTML = '';
+            if (sources && sources.length > 0) {
+                sourcesHTML = `
+                    <div class="mt-3 pt-3 border-t border-gray-200">
+                        <p class="text-xs text-gray-500 mb-2">📚 Sources:</p>
+                        ${sources.map(src => `
+                            <div class="text-xs text-gray-600 mb-1">
+                                <span class="font-mono">${src.source}</span>
+                                <span class="text-gray-400">(${(src.relevance_score * 100).toFixed(0)}%)</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            messageDiv.innerHTML = `
+                <div class="max-w-3xl ${bgColor} rounded-lg px-4 py-3 shadow ${alignment}">
+                    <div class="message-content prose prose-sm max-w-none">
+                        ${isUser ? content : marked.parse(content)}
+                    </div>
+                    ${sourcesHTML}
+                </div>
+            `;
+
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function sendMessage(event) {
+            event.preventDefault();
+
+            const input = document.getElementById('message-input');
+            const sendButton = document.getElementById('send-button');
+            const userMessage = input.value.trim();
+
+            if (!userMessage || !currentPersona) return;
+
+            // Disable input
+            input.disabled = true;
+            sendButton.disabled = true;
+            sendButton.textContent = 'Thinking...';
+
+            // Add user message
+            addMessage('user', userMessage);
+            input.value = '';
+
+            // Add to history
+            conversationHistory.push({
+                role: 'user',
+                content: userMessage,
+                timestamp: new Date().toISOString()
+            });
+
+            try {
+                const response = await fetch(`${API_BASE}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        persona_id: currentPersona.id,
+                        message: userMessage,
+                        conversation_history: conversationHistory.slice(-10) // Last 10 messages
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Failed to get response');
+                }
+
+                const data = await response.json();
+
+                // Add assistant message
+                addMessage('assistant', data.message, data.sources);
+
+                // Add to history
+                conversationHistory.push({
+                    role: 'assistant',
+                    content: data.message,
+                    timestamp: new Date().toISOString()
+                });
+
+            } catch (error) {
+                addMessage('assistant', `❌ Error: ${error.message}`);
+            } finally {
+                // Re-enable input
+                input.disabled = false;
+                sendButton.disabled = false;
+                sendButton.textContent = 'Send';
+                input.focus();
+            }
+        }
+
+        // Initialize
+        loadPersonas();
+    </script>
+</body>
+</html>

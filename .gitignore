@@ -98,8 +98,12 @@ coverage/
 *.tmp
 *.temp
 *.pid
+.*.pid
+.start.pid
 .api.pid
 .ui.pid
+rag_api.pid
+rag_ui.pid
 
 # Test coverage
 coverage/
@@ -118,3 +122,7 @@ chromadb/
 *.backup
 *.old
 .cache/
+vector_db/
+__pycache__/
+*.pyc
+.venv/
