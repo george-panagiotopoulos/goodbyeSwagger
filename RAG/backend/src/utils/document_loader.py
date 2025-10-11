@@ -10,35 +10,43 @@ from src.models.document import Document
 logger = logging.getLogger(__name__)
 
 
-# Knowledge category mapping based on file paths
-CATEGORY_MAPPINGS = {
-    "architecture": "architecture_knowledge",
-    "design": "architecture_knowledge",
-    "adr": "architecture_knowledge",
-    "api": "api_knowledge",
-    "swagger": "api_knowledge",
-    "openapi": "api_knowledge",
-    "endpoints": "api_knowledge",
-    "business": "business_knowledge",
-    "product": "business_knowledge",
-    "marketing": "business_knowledge",
-    "use-case": "business_knowledge",
-    "developer": "developer_knowledge",
-    "setup": "developer_knowledge",
-    "installation": "developer_knowledge",
-    "devops": "devops_knowledge",
-    "deployment": "devops_knowledge",
-    "infrastructure": "devops_knowledge",
-    "database": "data_knowledge",
-    "schema": "data_knowledge",
-    "migration": "data_knowledge",
-    "data-model": "data_knowledge",
-    "example": "code_examples_knowledge",
-    "snippet": "code_examples_knowledge",
-    "sample": "code_examples_knowledge",
-    "domain": "domain_knowledge",
-    "business-logic": "domain_knowledge",
-    "rules": "domain_knowledge",
+# Knowledge category mapping based on folder structure
+# Maps folder names in /Accounts/docs/ to collection names
+FOLDER_TO_COLLECTION = {
+    "api": "api",
+    "architecture": "architecture",
+    "business": "business",
+    "data_models": "data_models",
+    "devops": "devops",
+    "examples": "examples",
+    "user_guides": "user_guides",
+}
+
+# Additional keyword-based mappings for backwards compatibility
+KEYWORD_MAPPINGS = {
+    "swagger": "api",
+    "openapi": "api",
+    "endpoint": "api",
+    "adr": "architecture",
+    "design": "architecture",
+    "diagram": "architecture",
+    "marketing": "business",
+    "product": "business",
+    "use-case": "business",
+    "schema": "data_models",
+    "er-diagram": "data_models",
+    "migration": "data_models",
+    "deployment": "devops",
+    "infrastructure": "devops",
+    "operation": "devops",
+    "postman": "examples",
+    "curl": "examples",
+    "snippet": "examples",
+    "sample": "examples",
+    "getting-started": "user_guides",
+    "tutorial": "user_guides",
+    "howto": "user_guides",
+    "setup": "user_guides",
 }
 
 
@@ -46,21 +54,29 @@ def categorize_document(file_path: str) -> str:
     """
     Determine category for a document based on its path
 
+    Maps folder structure to collection names for better organization.
+    E.g., docs/api/ -> "api" collection, docs/business/ -> "business" collection
+
     Args:
         file_path: Path to the file
 
     Returns:
-        Category name (collection name)
+        Category name (collection name matching folder structure)
     """
     file_path_lower = file_path.lower()
 
-    # Check path components
-    for keyword, category in CATEGORY_MAPPINGS.items():
-        if keyword in file_path_lower:
-            return category
+    # First, check direct folder matches (highest priority)
+    for folder_name, collection_name in FOLDER_TO_COLLECTION.items():
+        if f"/{folder_name}/" in file_path_lower or file_path_lower.startswith(folder_name + "/"):
+            return collection_name
 
-    # Default to developer knowledge
-    return "developer_knowledge"
+    # Then check keyword-based mappings
+    for keyword, collection_name in KEYWORD_MAPPINGS.items():
+        if keyword in file_path_lower:
+            return collection_name
+
+    # Default to user_guides for unclassified docs
+    return "user_guides"
 
 
 def chunk_text(text: str, chunk_size: int = 1000, chunk_overlap: int = 200) -> List[str]:

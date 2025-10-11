@@ -1,0 +1,317 @@
+{
+  "description": "Maps each persona to their relevant knowledge vector collections with weights",
+  "personas": {
+    "developer": {
+      "name": "Dev Assistant",
+      "avatar": "👨‍💻",
+      "primary_focus": "Coding, setup, debugging, understanding codebase",
+      "knowledge_vectors": [
+        {
+          "collection": "user_guides",
+          "weight": 0.9,
+          "reason": "Setup and getting started guides"
+        },
+        {
+          "collection": "api",
+          "weight": 1.0,
+          "reason": "API endpoints, integration, technical details"
+        },
+        {
+          "collection": "examples",
+          "weight": 1.0,
+          "reason": "Code examples, Postman collections, working code"
+        },
+        {
+          "collection": "data_models",
+          "weight": 0.8,
+          "reason": "Database schema, entity relationships"
+        },
+        {
+          "collection": "architecture",
+          "weight": 0.7,
+          "reason": "System structure, component interactions"
+        },
+        {
+          "collection": "devops",
+          "weight": 0.6,
+          "reason": "Deployment scripts, running locally"
+        }
+      ],
+      "excluded_collections": ["business"],
+      "exclusion_reason": "Developers need technical details, not marketing materials"
+    },
+    "devops": {
+      "name": "Ops Assistant",
+      "avatar": "🔧",
+      "primary_focus": "Deployment, infrastructure, database operations, system administration",
+      "knowledge_vectors": [
+        {
+          "collection": "devops",
+          "weight": 1.0,
+          "reason": "Deployment scripts, infrastructure, operations"
+        },
+        {
+          "collection": "data_models",
+          "weight": 0.9,
+          "reason": "Database operations, migrations, backups"
+        },
+        {
+          "collection": "user_guides",
+          "weight": 0.7,
+          "reason": "Setup and installation procedures"
+        },
+        {
+          "collection": "architecture",
+          "weight": 0.6,
+          "reason": "System components and dependencies"
+        },
+        {
+          "collection": "api",
+          "weight": 0.5,
+          "reason": "API health checks, monitoring endpoints"
+        }
+      ],
+      "excluded_collections": ["business", "examples"],
+      "exclusion_reason": "Ops focuses on running the system, not coding or marketing"
+    },
+    "business": {
+      "name": "Business Expert",
+      "avatar": "💼",
+      "primary_focus": "Features, use cases, product functionality, user perspective",
+      "knowledge_vectors": [
+        {
+          "collection": "business",
+          "weight": 1.0,
+          "reason": "Business documentation, marketing, benefits"
+        },
+        {
+          "collection": "user_guides",
+          "weight": 0.9,
+          "reason": "How to use features from user perspective"
+        },
+        {
+          "collection": "api",
+          "weight": 0.4,
+          "reason": "Light API knowledge for understanding capabilities"
+        }
+      ],
+      "excluded_collections": ["data_models", "devops", "examples", "architecture"],
+      "exclusion_reason": "Business users don't need technical implementation details"
+    },
+    "api_consumer": {
+      "name": "API Guide",
+      "avatar": "🔌",
+      "primary_focus": "API integration, endpoints, request/response examples",
+      "knowledge_vectors": [
+        {
+          "collection": "api",
+          "weight": 1.0,
+          "reason": "OpenAPI specs, endpoints, authentication"
+        },
+        {
+          "collection": "examples",
+          "weight": 1.0,
+          "reason": "Postman collections, curl examples, integration code"
+        },
+        {
+          "collection": "user_guides",
+          "weight": 0.6,
+          "reason": "Getting started with API access"
+        },
+        {
+          "collection": "data_models",
+          "weight": 0.5,
+          "reason": "Understanding API data structures"
+        }
+      ],
+      "excluded_collections": ["business", "devops", "architecture"],
+      "exclusion_reason": "API consumers need endpoint docs and examples, not deployment or business docs"
+    },
+    "architect": {
+      "name": "Architecture Advisor",
+      "avatar": "🏛️",
+      "primary_focus": "System design, patterns, technical decisions, component interactions",
+      "knowledge_vectors": [
+        {
+          "collection": "architecture",
+          "weight": 1.0,
+          "reason": "Architecture diagrams, ADRs, design decisions"
+        },
+        {
+          "collection": "data_models",
+          "weight": 0.8,
+          "reason": "Entity relationships, database design"
+        },
+        {
+          "collection": "api",
+          "weight": 0.7,
+          "reason": "API design patterns, REST principles"
+        },
+        {
+          "collection": "devops",
+          "weight": 0.6,
+          "reason": "Deployment architecture, infrastructure"
+        },
+        {
+          "collection": "user_guides",
+          "weight": 0.5,
+          "reason": "Overall system capabilities"
+        }
+      ],
+      "excluded_collections": ["business", "examples"],
+      "exclusion_reason": "Architects focus on design, not marketing or code examples"
+    },
+    "dba": {
+      "name": "Data Expert",
+      "avatar": "🗄️",
+      "primary_focus": "Database schema, queries, migrations, data integrity",
+      "knowledge_vectors": [
+        {
+          "collection": "data_models",
+          "weight": 1.0,
+          "reason": "Schema, ER diagrams, tables, columns, relationships"
+        },
+        {
+          "collection": "devops",
+          "weight": 0.7,
+          "reason": "Database operations, migrations, backups"
+        },
+        {
+          "collection": "api",
+          "weight": 0.5,
+          "reason": "Understanding data flow through API"
+        },
+        {
+          "collection": "user_guides",
+          "weight": 0.4,
+          "reason": "Database setup instructions"
+        }
+      ],
+      "excluded_collections": ["business", "examples", "architecture"],
+      "exclusion_reason": "DBAs need schema details, not business docs or code examples"
+    },
+    "general": {
+      "name": "Universal Helper",
+      "avatar": "🤖",
+      "primary_focus": "General questions, overviews, routing to specialists",
+      "knowledge_vectors": [
+        {
+          "collection": "user_guides",
+          "weight": 0.8,
+          "reason": "General getting started and overview"
+        },
+        {
+          "collection": "api",
+          "weight": 0.7,
+          "reason": "Basic API understanding"
+        },
+        {
+          "collection": "business",
+          "weight": 0.7,
+          "reason": "What the system does"
+        },
+        {
+          "collection": "architecture",
+          "weight": 0.6,
+          "reason": "System overview"
+        },
+        {
+          "collection": "data_models",
+          "weight": 0.6,
+          "reason": "Basic data understanding"
+        },
+        {
+          "collection": "devops",
+          "weight": 0.6,
+          "reason": "How to run the system"
+        },
+        {
+          "collection": "examples",
+          "weight": 0.5,
+          "reason": "Sample usage"
+        }
+      ],
+      "excluded_collections": [],
+      "exclusion_reason": "General helper has access to all areas with balanced weights"
+    },
+    "kid": {
+      "name": "Kid Explainer",
+      "avatar": "🎮",
+      "primary_focus": "Fun explanations using toys, cartoons, and superheroes",
+      "knowledge_vectors": [
+        {
+          "collection": "user_guides",
+          "weight": 0.9,
+          "reason": "Understanding what the system does"
+        },
+        {
+          "collection": "business",
+          "weight": 0.8,
+          "reason": "Features to explain in fun ways"
+        },
+        {
+          "collection": "api",
+          "weight": 0.7,
+          "reason": "Understanding technical concepts to translate to kid-speak"
+        },
+        {
+          "collection": "architecture",
+          "weight": 0.7,
+          "reason": "System components to explain as superheroes/toys"
+        },
+        {
+          "collection": "data_models",
+          "weight": 0.6,
+          "reason": "Database concepts to explain as toy boxes"
+        },
+        {
+          "collection": "examples",
+          "weight": 0.6,
+          "reason": "Real examples to make fun analogies"
+        },
+        {
+          "collection": "devops",
+          "weight": 0.5,
+          "reason": "How things work together"
+        }
+      ],
+      "excluded_collections": [],
+      "exclusion_reason": "Kid can access all docs to make fun comparisons, but needs to stay accurate"
+    }
+  },
+  "collection_descriptions": {
+    "api": {
+      "folder": "/Accounts/docs/api/",
+      "content": "OpenAPI specs, API vocabulary, endpoint documentation, authentication"
+    },
+    "architecture": {
+      "folder": "/Accounts/docs/architecture/",
+      "content": "Architecture diagrams, ADRs, system design, component interactions"
+    },
+    "business": {
+      "folder": "/Accounts/docs/business/",
+      "content": "Marketing materials, business documentation, product benefits, use cases"
+    },
+    "data_models": {
+      "folder": "/Accounts/docs/data_models/",
+      "content": "Database schema, ER diagrams, entity relationships, data structures"
+    },
+    "devops": {
+      "folder": "/Accounts/docs/devops/",
+      "content": "Deployment guides, infrastructure docs, operations, scripts"
+    },
+    "examples": {
+      "folder": "/Accounts/docs/examples/",
+      "content": "Code examples, Postman collections, curl commands, integration samples"
+    },
+    "user_guides": {
+      "folder": "/Accounts/docs/user_guides/",
+      "content": "Getting started, tutorials, how-to guides, setup instructions"
+    }
+  },
+  "notes": {
+    "weight_meaning": "Weight 1.0 = highest priority for retrieval, 0.0 = not used",
+    "multiple_collections": "Personas can access multiple collections with different weights",
+    "routing": "General persona should route deep questions to specialized personas"
+  }
+}

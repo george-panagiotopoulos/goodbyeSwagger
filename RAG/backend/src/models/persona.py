@@ -2,6 +2,9 @@
 from pydantic import BaseModel, Field
 from typing import List, Dict
 from enum import Enum
+import json
+import os
+from pathlib import Path
 
 
 class KnowledgeVector(BaseModel):
@@ -21,6 +24,7 @@ class PersonaType(str, Enum):
     ARCHITECT = "architect"
     DBA = "dba"
     GENERAL = "general"
+    KID = "kid"
 
 
 class Persona(BaseModel):
@@ -55,28 +59,47 @@ class Persona(BaseModel):
         }
 
 
-# Predefined personas
+def load_system_prompts() -> Dict[str, Dict]:
+    """Load system prompts from JSON file"""
+    json_path = Path(__file__).parent.parent.parent / "system_prompts.json"
+    if json_path.exists():
+        with open(json_path, 'r') as f:
+            return json.load(f)
+    return {}
+
+
+def load_persona_mappings() -> Dict:
+    """Load persona-vector mappings from JSON file"""
+    json_path = Path(__file__).parent.parent.parent / "persona_vector_mapping.json"
+    if json_path.exists():
+        with open(json_path, 'r') as f:
+            return json.load(f)
+    return {}
+
+
+# Load prompts and mappings
+SYSTEM_PROMPTS = load_system_prompts()
+PERSONA_MAPPINGS = load_persona_mappings()
+
+
+# Predefined personas (using JSON configuration)
 PERSONAS: Dict[str, Persona] = {
     "developer": Persona(
         id="developer",
-        name="Dev Assistant",
+        name=SYSTEM_PROMPTS.get("developer", {}).get("name", "Dev Assistant"),
         description="Helps developers with setup, coding, debugging, and understanding the codebase",
         avatar="👨‍💻",
         knowledge_vectors=[
-            KnowledgeVector(collection="developer_knowledge", weight=1.0),
-            KnowledgeVector(collection="architecture_knowledge", weight=0.8),
-            KnowledgeVector(collection="api_knowledge", weight=0.8),
-            KnowledgeVector(collection="code_examples_knowledge", weight=0.9),
-            KnowledgeVector(collection="data_knowledge", weight=0.6),
+            KnowledgeVector(collection=v["collection"], weight=v["weight"])
+            for v in PERSONA_MAPPINGS.get("personas", {}).get("developer", {}).get("knowledge_vectors", [
+                {"collection": "user_guides", "weight": 0.9},
+                {"collection": "api", "weight": 1.0},
+                {"collection": "examples", "weight": 1.0},
+                {"collection": "data_models", "weight": 0.8},
+                {"collection": "architecture", "weight": 0.7},
+            ])
         ],
-        system_prompt="""You are a senior developer mentor helping developers understand and work with the Account Processing System.
-You provide clear explanations, code examples, and step-by-step guidance. Focus on practical implementation and best practices.
-When answering:
-- Provide working code examples when relevant
-- Explain the "why" behind decisions
-- Reference specific files and line numbers when possible
-- Suggest debugging approaches for issues
-Always be helpful, patient, and encourage good development practices.""",
+        system_prompt=SYSTEM_PROMPTS.get("developer", {}).get("system_prompt", "You are a developer assistant."),
         temperature=0.7,
         max_tokens=2000,
         top_p=0.95
@@ -84,24 +107,18 @@ Always be helpful, patient, and encourage good development practices.""",
 
     "devops": Persona(
         id="devops",
-        name="Ops Assistant",
+        name=SYSTEM_PROMPTS.get("devops", {}).get("name", "Ops Assistant"),
         description="Helps with deployment, infrastructure, database operations, and system administration",
         avatar="🔧",
         knowledge_vectors=[
-            KnowledgeVector(collection="devops_knowledge", weight=1.0),
-            KnowledgeVector(collection="data_knowledge", weight=0.9),
-            KnowledgeVector(collection="api_knowledge", weight=0.6),
-            KnowledgeVector(collection="architecture_knowledge", weight=0.7),
+            KnowledgeVector(collection=v["collection"], weight=v["weight"])
+            for v in PERSONA_MAPPINGS.get("personas", {}).get("devops", {}).get("knowledge_vectors", [
+                {"collection": "devops", "weight": 1.0},
+                {"collection": "data_models", "weight": 0.9},
+                {"collection": "user_guides", "weight": 0.7},
+            ])
         ],
-        system_prompt="""You are a DevOps expert specializing in the Account Processing System infrastructure.
-You help with deployment, database operations, monitoring, and system administration.
-When answering:
-- Provide specific commands and scripts
-- Explain configuration options
-- Focus on reliability, scalability, and maintainability
-- Include troubleshooting steps
-- Reference relevant deployment scripts (start.sh, stop.sh)
-Always prioritize system stability and data integrity.""",
+        system_prompt=SYSTEM_PROMPTS.get("devops", {}).get("system_prompt", "You are a DevOps assistant."),
         temperature=0.5,
         max_tokens=2000,
         top_p=0.95
@@ -109,23 +126,18 @@ Always prioritize system stability and data integrity.""",
 
     "business": Persona(
         id="business",
-        name="Business Expert",
+        name=SYSTEM_PROMPTS.get("business", {}).get("name", "Business Expert"),
         description="Explains business features, use cases, and product functionality from a user perspective",
         avatar="💼",
         knowledge_vectors=[
-            KnowledgeVector(collection="business_knowledge", weight=1.0),
-            KnowledgeVector(collection="domain_knowledge", weight=0.9),
-            KnowledgeVector(collection="api_knowledge", weight=0.4),
+            KnowledgeVector(collection=v["collection"], weight=v["weight"])
+            for v in PERSONA_MAPPINGS.get("personas", {}).get("business", {}).get("knowledge_vectors", [
+                {"collection": "business", "weight": 1.0},
+                {"collection": "user_guides", "weight": 0.9},
+                {"collection": "api", "weight": 0.4},
+            ])
         ],
-        system_prompt="""You are a business analyst and product expert for the Account Processing System.
-You help users understand business value, features, workflows, and use cases.
-When answering:
-- Avoid technical jargon unless necessary
-- Focus on what the system does for end users
-- Explain business workflows and scenarios
-- Describe features in business terms
-- Reference use cases and user stories
-Always make information accessible to non-technical stakeholders.""",
+        system_prompt=SYSTEM_PROMPTS.get("business", {}).get("system_prompt", "You are a business expert."),
         temperature=0.7,
         max_tokens=2000,
         top_p=0.95
@@ -133,24 +145,18 @@ Always make information accessible to non-technical stakeholders.""",
 
     "api_consumer": Persona(
         id="api_consumer",
-        name="API Guide",
+        name=SYSTEM_PROMPTS.get("api_consumer", {}).get("name", "API Guide"),
         description="Helps external developers integrate with the REST API, with examples and best practices",
         avatar="🔌",
         knowledge_vectors=[
-            KnowledgeVector(collection="api_knowledge", weight=1.0),
-            KnowledgeVector(collection="code_examples_knowledge", weight=0.9),
-            KnowledgeVector(collection="developer_knowledge", weight=0.5),
+            KnowledgeVector(collection=v["collection"], weight=v["weight"])
+            for v in PERSONA_MAPPINGS.get("personas", {}).get("api_consumer", {}).get("knowledge_vectors", [
+                {"collection": "api", "weight": 1.0},
+                {"collection": "examples", "weight": 1.0},
+                {"collection": "user_guides", "weight": 0.6},
+            ])
         ],
-        system_prompt="""You are an API documentation expert helping developers integrate with the Account Processing System API.
-You provide clear API documentation, examples, and integration guidance.
-When answering:
-- Always reference specific API endpoints
-- Provide cURL and code examples
-- Explain authentication and authorization
-- Show request/response examples
-- Reference HATEOAS links
-- Explain error codes and handling
-Focus on making API integration easy and successful.""",
+        system_prompt=SYSTEM_PROMPTS.get("api_consumer", {}).get("system_prompt", "You are an API guide."),
         temperature=0.6,
         max_tokens=2000,
         top_p=0.95
@@ -158,25 +164,18 @@ Focus on making API integration easy and successful.""",
 
     "architect": Persona(
         id="architect",
-        name="Architecture Advisor",
+        name=SYSTEM_PROMPTS.get("architect", {}).get("name", "Architecture Advisor"),
         description="Explains system architecture, design decisions, patterns, and technical trade-offs",
         avatar="🏛️",
         knowledge_vectors=[
-            KnowledgeVector(collection="architecture_knowledge", weight=1.0),
-            KnowledgeVector(collection="domain_knowledge", weight=0.8),
-            KnowledgeVector(collection="data_knowledge", weight=0.7),
-            KnowledgeVector(collection="devops_knowledge", weight=0.6),
+            KnowledgeVector(collection=v["collection"], weight=v["weight"])
+            for v in PERSONA_MAPPINGS.get("personas", {}).get("architect", {}).get("knowledge_vectors", [
+                {"collection": "architecture", "weight": 1.0},
+                {"collection": "data_models", "weight": 0.8},
+                {"collection": "api", "weight": 0.7},
+            ])
         ],
-        system_prompt="""You are a system architect expert on the Account Processing System.
-You explain architectural decisions, design patterns, and system structure.
-When answering:
-- Reference architecture diagrams and ADRs
-- Explain the "why" behind design decisions
-- Discuss technical trade-offs
-- Describe component interactions
-- Reference architectural patterns used
-- Consider scalability and maintainability
-Provide high-level insights while being technically accurate.""",
+        system_prompt=SYSTEM_PROMPTS.get("architect", {}).get("system_prompt", "You are an architecture advisor."),
         temperature=0.6,
         max_tokens=2000,
         top_p=0.95
@@ -184,24 +183,18 @@ Provide high-level insights while being technically accurate.""",
 
     "dba": Persona(
         id="dba",
-        name="Data Expert",
+        name=SYSTEM_PROMPTS.get("dba", {}).get("name", "Data Expert"),
         description="Helps with database schema, queries, migrations, and data integrity",
         avatar="🗄️",
         knowledge_vectors=[
-            KnowledgeVector(collection="data_knowledge", weight=1.0),
-            KnowledgeVector(collection="domain_knowledge", weight=0.8),
-            KnowledgeVector(collection="devops_knowledge", weight=0.6),
+            KnowledgeVector(collection=v["collection"], weight=v["weight"])
+            for v in PERSONA_MAPPINGS.get("personas", {}).get("dba", {}).get("knowledge_vectors", [
+                {"collection": "data_models", "weight": 1.0},
+                {"collection": "devops", "weight": 0.7},
+                {"collection": "api", "weight": 0.5},
+            ])
         ],
-        system_prompt="""You are a database architect expert on the Account Processing System database.
-You help with schema design, queries, migrations, and data integrity.
-When answering:
-- Provide SQL examples
-- Explain relationships and constraints
-- Reference specific tables and columns
-- Show query optimization techniques
-- Explain migration processes
-- Focus on data consistency and integrity
-Always ensure data accuracy and performance.""",
+        system_prompt=SYSTEM_PROMPTS.get("dba", {}).get("system_prompt", "You are a data expert."),
         temperature=0.5,
         max_tokens=2000,
         top_p=0.95
@@ -209,29 +202,47 @@ Always ensure data accuracy and performance.""",
 
     "general": Persona(
         id="general",
-        name="Universal Helper",
+        name=SYSTEM_PROMPTS.get("general", {}).get("name", "Universal Helper"),
         description="General assistant that can answer any question about the system",
         avatar="🤖",
         knowledge_vectors=[
-            KnowledgeVector(collection="developer_knowledge", weight=0.8),
-            KnowledgeVector(collection="architecture_knowledge", weight=0.8),
-            KnowledgeVector(collection="api_knowledge", weight=0.8),
-            KnowledgeVector(collection="business_knowledge", weight=0.8),
-            KnowledgeVector(collection="devops_knowledge", weight=0.8),
-            KnowledgeVector(collection="data_knowledge", weight=0.8),
-            KnowledgeVector(collection="code_examples_knowledge", weight=0.7),
-            KnowledgeVector(collection="domain_knowledge", weight=0.7),
+            KnowledgeVector(collection=v["collection"], weight=v["weight"])
+            for v in PERSONA_MAPPINGS.get("personas", {}).get("general", {}).get("knowledge_vectors", [
+                {"collection": "user_guides", "weight": 0.8},
+                {"collection": "api", "weight": 0.7},
+                {"collection": "business", "weight": 0.7},
+                {"collection": "architecture", "weight": 0.6},
+                {"collection": "data_models", "weight": 0.6},
+                {"collection": "devops", "weight": 0.6},
+                {"collection": "examples", "weight": 0.5},
+            ])
         ],
-        system_prompt="""You are a knowledgeable assistant for the Account Processing System with broad expertise.
-You can answer questions about any aspect of the system and route users to specialized personas when appropriate.
-When answering:
-- Provide accurate information from all knowledge areas
-- Suggest specific personas for deep-dive questions
-- Give overviews and summaries
-- Be helpful and friendly
-If you don't have enough information, be honest and suggest where to find more details.""",
+        system_prompt=SYSTEM_PROMPTS.get("general", {}).get("system_prompt", "You are a general assistant."),
         temperature=0.7,
         max_tokens=2000,
+        top_p=0.95
+    ),
+
+    "kid": Persona(
+        id="kid",
+        name=SYSTEM_PROMPTS.get("kid", {}).get("name", "Kid Explainer"),
+        description="Explains technical concepts using toys, cartoons, and superheroes - fun for everyone!",
+        avatar="🎮",
+        knowledge_vectors=[
+            KnowledgeVector(collection=v["collection"], weight=v["weight"])
+            for v in PERSONA_MAPPINGS.get("personas", {}).get("kid", {}).get("knowledge_vectors", [
+                {"collection": "user_guides", "weight": 0.9},
+                {"collection": "business", "weight": 0.8},
+                {"collection": "api", "weight": 0.7},
+                {"collection": "architecture", "weight": 0.7},
+                {"collection": "data_models", "weight": 0.6},
+                {"collection": "examples", "weight": 0.6},
+                {"collection": "devops", "weight": 0.5},
+            ])
+        ],
+        system_prompt=SYSTEM_PROMPTS.get("kid", {}).get("system_prompt", "You are a kid explainer."),
+        temperature=0.9,  # Higher temperature for more creative comparisons
+        max_tokens=2500,  # More tokens for storytelling
         top_p=0.95
     ),
 }
