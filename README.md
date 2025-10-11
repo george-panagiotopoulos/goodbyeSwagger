@@ -255,6 +255,15 @@ source backend/.venv/bin/activate
 python3 scripts/ingest_documents.py
 ```
 
+**Available RAG Scripts:**
+- `ingest_documents.py` - Main ingestion script for all documentation
+- `ingest_demoflow.py` - Ingest API flow demonstration examples
+- `ingest_demoflow_quick.py` - Quick ingestion using document loader
+- `add_demoflow_direct.py` - Direct demoflow document addition to vector DB
+- `test_rag_query.py` - Test RAG queries with different personas
+- `test_rag_query_debug.py` - Debug RAG API responses
+- `test_rag_curl.py` - Validate curl commands from RAG responses
+
 **2. Access Chat UI:**
 ```
 http://localhost:6604
@@ -496,7 +505,7 @@ goodbyeSwagger/
 ├── RAG/                   # Documentation assistant
 │   ├── backend/           # FastAPI (6603)
 │   ├── frontend/          # Chat UI (6604)
-│   ├── scripts/           # Doc ingestion
+│   ├── scripts/           # Ingestion & testing utilities
 │   ├── start_rag.sh       # Start RAG
 │   └── stop_rag.sh        # Stop RAG
 │

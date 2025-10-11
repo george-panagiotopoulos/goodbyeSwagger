@@ -1,0 +1,585 @@
+================================================================================
+Account Processing System - API Flow Demonstration
+Timestamp: 2025-10-11T09:12:59.963217
+Base URL: http://localhost:6600
+================================================================================
+
+
+
+################################################################################
+# STEP 1: Authentication - Login
+################################################################################
+
+================================================================================
+REQUEST: POST http://localhost:6600/api/auth/login
+================================================================================
+Headers:
+  Content-Type: application/json
+  Accept: application/json
+
+Body:
+{
+  "username": "demo_user",
+  "password": "demo_pass123"
+}
+
+RESPONSE: 200
+--------------------------------------------------------------------------------
+Description: Authenticate and obtain JWT token
+
+{
+  "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJVU1ItMTBkYjNkZmUtNDkwNC00MTAxLWE4ODAtMTcwOWZiNDcyMDY1IiwidXNlcm5hbWUiOiJkZW1vX3VzZXIiLCJyb2xlIjoiYWRtaW4iLCJleHAiOjE3NjAyNDk1ODAsImlhdCI6MTc2MDE2MzE4MH0.bnFsbhl7to7Mmjk1dQqNoaHJYXOIt2KymQMCJA78vO0",
+  "user": {
+    "user_id": "USR-10db3dfe-4904-4101-a880-1709fb472065",
+    "username": "demo_user",
+    "full_name": "Demo User",
+    "email": "demo@example.com",
+    "role": "admin"
+  }
+}
+
+
+################################################################################
+# STEP 2: Create Customer
+################################################################################
+
+================================================================================
+REQUEST: POST http://localhost:6600/api/customers
+================================================================================
+Headers:
+  Content-Type: application/json
+  Accept: application/json
+  Authorization: Bearer <token>
+
+Body:
+{
+  "customer_name": "John Demo Customer",
+  "customer_type": "Individual",
+  "external_customer_id": "EXT-20251011091300",
+  "email": "john.demo@example.com",
+  "phone": "+1-555-0123"
+}
+
+RESPONSE: 201
+--------------------------------------------------------------------------------
+Description: Create a new individual customer in the system
+
+{
+  "success": true,
+  "data": {
+    "customer_id": "CUST-03c11180-3580-4762-9895-2fc464f5650f",
+    "external_customer_id": "EXT-20251011091300",
+    "customer_name": "John Demo Customer",
+    "customer_type": "Individual",
+    "status": "Active",
+    "email": "john.demo@example.com",
+    "phone": "+1-555-0123",
+    "created_at": "2025-10-11T06:13:00.796487+00:00",
+    "updated_at": "2025-10-11T06:13:00.796487+00:00"
+  },
+  "error": null
+}
+
+
+################################################################################
+# STEP 3: Create Account
+################################################################################
+
+================================================================================
+REQUEST: GET http://localhost:6600/api/products
+================================================================================
+Headers:
+  Content-Type: application/json
+  Accept: application/json
+  Authorization: Bearer <token>
+
+
+RESPONSE: 200
+--------------------------------------------------------------------------------
+Description: Retrieve available products to select one for the account
+
+{
+  "success": true,
+  "data": [
+    {
+      "product_id": "PROD-CHK-BASIC-001",
+      "product_name": "Basic Checking",
+      "product_code": "CHK-BASIC-001",
+      "description": null,
+      "status": "Active",
+      "currency": "USD",
+      "interest_rate": "0.0149999999999999994448884877",
+      "minimum_balance_for_interest": "100",
+      "monthly_maintenance_fee": "5",
+      "transaction_fee": "1",
+      "created_at": "2025-10-10T18:01:29+00:00",
+      "updated_at": "2025-10-10T18:01:29+00:00"
+    },
+    {
+      "product_id": "PROD-CHK-PREM-001",
+      "product_name": "Premium Checking",
+      "product_code": "CHK-PREM-001",
+      "description": null,
+      "status": "Active",
+      "currency": "USD",
+      "interest_rate": "0.0250000000000000013877787808",
+      "minimum_balance_for_interest": "500",
+      "monthly_maintenance_fee": "15",
+      "transaction_fee": "0",
+      "created_at": "2025-10-10T18:01:29+00:00",
+      "updated_at": "2025-10-10T18:01:29+00:00"
+    },
+    {
+      "product_id": "PROD-CHK-STUDENT-001",
+      "product_name": "Student Checking",
+      "product_code": "CHK-STUDENT-001",
+      "description": null,
+      "status": "Active",
+      "currency": "USD",
+      "interest_rate": "0.0100000000000000002081668171",
+      "minimum_balance_for_interest": "0",
+      "monthly_maintenance_fee": "0",
+      "transaction_fee": "0",
+      "created_at": "2025-10-10T18:01:29+00:00",
+      "updated_at": "2025-10-10T18:01:29+00:00"
+    },
+    {
+      "product_id": "PROD-SAV-HIGH-001",
+      "product_name": "High-Yield Savings",
+      "product_code": "SAV-HIGH-001",
+      "description": null,
+      "status": "Active",
+      "currency": "USD",
+      "interest_rate": "0.0400000000000000008326672685",
+      "minimum_balance_for_interest": "1000",
+      "monthly_maintenance_fee": "0",
+      "transaction_fee": "3",
+      "created_at": "2025-10-10T18:01:29+00:00",
+      "updated_at": "2025-10-10T18:01:29+00:00"
+    },
+    {
+      "product_id": "PROD-CHK-BUS-001",
+      "product_name": "Business Checking",
+      "product_code": "CHK-BUS-001",
+      "description": null,
+      "status": "Active",
+      "currency": "USD",
+      "interest_rate": "0.0200000000000000004163336342",
+      "minimum_balance_for_interest": "1000",
+      "monthly_maintenance_fee": "25",
+      "transaction_fee": "0.5",
+      "created_at": "2025-10-10T18:01:29+00:00",
+      "updated_at": "2025-10-10T18:01:29+00:00"
+    },
+    {
+      "product_id": "PROD-CHK-OLD-001",
+      "product_name": "Legacy Checking",
+      "product_code": "CHK-OLD-001",
+      "description": null,
+      "status": "Inactive",
+      "currency": "USD",
+      "interest_rate": "0.0050000000000000001040834086",
+      "minimum_balance_for_interest": "0",
+      "monthly_maintenance_fee": "10",
+      "transaction_fee": "2",
+      "created_at": "2025-10-10T18:01:29+00:00",
+      "updated_at": "2025-10-10T18:01:29+00:00"
+    },
+    {
+      "product_id": "PROD-18b2aa15-f68a-4708-845f-bd83822d6ca5",
+      "product_name": "Standard Checking Account",
+      "product_code": "CHK-STD-001",
+      "description": null,
+      "status": "Active",
+      "currency": "USD",
+      "interest_rate": "0.0149999999999999994448884877",
+      "minimum_balance_for_interest": "1000",
+      "monthly_maintenance_fee": "5",
+      "transaction_fee": "0.5",
+      "created_at": "2025-10-04T18:32:00+00:00",
+      "updated_at": "2025-10-04T18:32:00+00:00"
+    }
+  ],
+  "error": null
+}
+
+================================================================================
+REQUEST: POST http://localhost:6600/api/accounts
+================================================================================
+Headers:
+  Content-Type: application/json
+  Accept: application/json
+  Authorization: Bearer <token>
+
+Body:
+{
+  "customer_id": "CUST-03c11180-3580-4762-9895-2fc464f5650f",
+  "product_id": "PROD-SAV-HIGH-001",
+  "opening_balance": "1000.00"
+}
+
+RESPONSE: 201
+--------------------------------------------------------------------------------
+Description: Create a new account for the customer with an opening balance
+
+{
+  "success": true,
+  "data": {
+    "account_id": "ACC-2bebfbd9-878f-4c44-b617-66bd0dc4eba5",
+    "account_number": "202500007",
+    "customer_id": "CUST-03c11180-3580-4762-9895-2fc464f5650f",
+    "product_id": "PROD-SAV-HIGH-001",
+    "currency": "USD",
+    "status": "Active",
+    "balance": "1000.00",
+    "interest_accrued": "0",
+    "opening_date": "2025-10-11",
+    "closing_date": null,
+    "created_at": "2025-10-11T06:13:00.844073+00:00",
+    "updated_at": "2025-10-11T06:13:00.844073+00:00"
+  },
+  "error": null
+}
+
+
+################################################################################
+# STEP 4: Process Transactions
+################################################################################
+
+================================================================================
+REQUEST: POST http://localhost:6600/api/accounts/ACC-2bebfbd9-878f-4c44-b617-66bd0dc4eba5/credit
+================================================================================
+Headers:
+  Content-Type: application/json
+  Accept: application/json
+  Authorization: Bearer <token>
+
+Body:
+{
+  "amount": "500.00",
+  "description": "Salary deposit",
+  "reference": "SAL-001"
+}
+
+RESPONSE: 200
+--------------------------------------------------------------------------------
+Description: Process credit transaction #1
+
+{
+  "success": true,
+  "data": {
+    "account_id": "ACC-2bebfbd9-878f-4c44-b617-66bd0dc4eba5",
+    "account_number": "202500007",
+    "customer_id": "CUST-03c11180-3580-4762-9895-2fc464f5650f",
+    "product_id": "PROD-SAV-HIGH-001",
+    "currency": "USD",
+    "status": "Active",
+    "balance": "1500.00",
+    "interest_accrued": "0",
+    "opening_date": "2025-10-11",
+    "closing_date": null,
+    "created_at": "2025-10-11T06:13:00+00:00",
+    "updated_at": "2025-10-11T06:13:00.873935+00:00"
+  },
+  "error": null
+}
+
+================================================================================
+REQUEST: POST http://localhost:6600/api/accounts/ACC-2bebfbd9-878f-4c44-b617-66bd0dc4eba5/debit
+================================================================================
+Headers:
+  Content-Type: application/json
+  Accept: application/json
+  Authorization: Bearer <token>
+
+Body:
+{
+  "amount": "150.00",
+  "description": "Utility payment",
+  "reference": "UTIL-001"
+}
+
+RESPONSE: 200
+--------------------------------------------------------------------------------
+Description: Process debit transaction #2
+
+{
+  "success": true,
+  "data": {
+    "account_id": "ACC-2bebfbd9-878f-4c44-b617-66bd0dc4eba5",
+    "account_number": "202500007",
+    "customer_id": "CUST-03c11180-3580-4762-9895-2fc464f5650f",
+    "product_id": "PROD-SAV-HIGH-001",
+    "currency": "USD",
+    "status": "Active",
+    "balance": "1347.00",
+    "interest_accrued": "0",
+    "opening_date": "2025-10-11",
+    "closing_date": null,
+    "created_at": "2025-10-11T06:13:00+00:00",
+    "updated_at": "2025-10-11T06:13:00.901740+00:00"
+  },
+  "error": null
+}
+
+================================================================================
+REQUEST: POST http://localhost:6600/api/accounts/ACC-2bebfbd9-878f-4c44-b617-66bd0dc4eba5/credit
+================================================================================
+Headers:
+  Content-Type: application/json
+  Accept: application/json
+  Authorization: Bearer <token>
+
+Body:
+{
+  "amount": "250.00",
+  "description": "Bonus payment",
+  "reference": "BONUS-001"
+}
+
+RESPONSE: 200
+--------------------------------------------------------------------------------
+Description: Process credit transaction #3
+
+{
+  "success": true,
+  "data": {
+    "account_id": "ACC-2bebfbd9-878f-4c44-b617-66bd0dc4eba5",
+    "account_number": "202500007",
+    "customer_id": "CUST-03c11180-3580-4762-9895-2fc464f5650f",
+    "product_id": "PROD-SAV-HIGH-001",
+    "currency": "USD",
+    "status": "Active",
+    "balance": "1597.00",
+    "interest_accrued": "0",
+    "opening_date": "2025-10-11",
+    "closing_date": null,
+    "created_at": "2025-10-11T06:13:00+00:00",
+    "updated_at": "2025-10-11T06:13:00.924742+00:00"
+  },
+  "error": null
+}
+
+================================================================================
+REQUEST: POST http://localhost:6600/api/accounts/ACC-2bebfbd9-878f-4c44-b617-66bd0dc4eba5/debit
+================================================================================
+Headers:
+  Content-Type: application/json
+  Accept: application/json
+  Authorization: Bearer <token>
+
+Body:
+{
+  "amount": "75.50",
+  "description": "Restaurant payment",
+  "reference": "REST-001"
+}
+
+RESPONSE: 200
+--------------------------------------------------------------------------------
+Description: Process debit transaction #4
+
+{
+  "success": true,
+  "data": {
+    "account_id": "ACC-2bebfbd9-878f-4c44-b617-66bd0dc4eba5",
+    "account_number": "202500007",
+    "customer_id": "CUST-03c11180-3580-4762-9895-2fc464f5650f",
+    "product_id": "PROD-SAV-HIGH-001",
+    "currency": "USD",
+    "status": "Active",
+    "balance": "1518.50",
+    "interest_accrued": "0",
+    "opening_date": "2025-10-11",
+    "closing_date": null,
+    "created_at": "2025-10-11T06:13:00+00:00",
+    "updated_at": "2025-10-11T06:13:00.949520+00:00"
+  },
+  "error": null
+}
+
+================================================================================
+REQUEST: POST http://localhost:6600/api/accounts/ACC-2bebfbd9-878f-4c44-b617-66bd0dc4eba5/credit
+================================================================================
+Headers:
+  Content-Type: application/json
+  Accept: application/json
+  Authorization: Bearer <token>
+
+Body:
+{
+  "amount": "100.00",
+  "description": "Refund received",
+  "reference": "REF-001"
+}
+
+RESPONSE: 200
+--------------------------------------------------------------------------------
+Description: Process credit transaction #5
+
+{
+  "success": true,
+  "data": {
+    "account_id": "ACC-2bebfbd9-878f-4c44-b617-66bd0dc4eba5",
+    "account_number": "202500007",
+    "customer_id": "CUST-03c11180-3580-4762-9895-2fc464f5650f",
+    "product_id": "PROD-SAV-HIGH-001",
+    "currency": "USD",
+    "status": "Active",
+    "balance": "1618.50",
+    "interest_accrued": "0",
+    "opening_date": "2025-10-11",
+    "closing_date": null,
+    "created_at": "2025-10-11T06:13:00+00:00",
+    "updated_at": "2025-10-11T06:13:00.971887+00:00"
+  },
+  "error": null
+}
+
+
+################################################################################
+# STEP 5: Retrieve Customer Details
+################################################################################
+
+================================================================================
+REQUEST: GET http://localhost:6600/api/customers/CUST-03c11180-3580-4762-9895-2fc464f5650f
+================================================================================
+Headers:
+  Content-Type: application/json
+  Accept: application/json
+  Authorization: Bearer <token>
+
+
+RESPONSE: 200
+--------------------------------------------------------------------------------
+Description: Retrieve the customer details including contact information
+
+{
+  "success": true,
+  "data": {
+    "customer_id": "CUST-03c11180-3580-4762-9895-2fc464f5650f",
+    "external_customer_id": "EXT-20251011091300",
+    "customer_name": "John Demo Customer",
+    "customer_type": "Individual",
+    "status": "Active",
+    "email": "john.demo@example.com",
+    "phone": "+1-555-0123",
+    "created_at": "2025-10-11T06:13:00+00:00",
+    "updated_at": "2025-10-11T06:13:00+00:00"
+  },
+  "error": null
+}
+
+
+################################################################################
+# STEP 6: Retrieve Transaction History
+################################################################################
+
+================================================================================
+REQUEST: GET http://localhost:6600/api/accounts/ACC-2bebfbd9-878f-4c44-b617-66bd0dc4eba5/transactions
+================================================================================
+Headers:
+  Content-Type: application/json
+  Accept: application/json
+  Authorization: Bearer <token>
+
+
+RESPONSE: 200
+--------------------------------------------------------------------------------
+Description: Retrieve complete transaction history for the account
+
+{
+  "success": true,
+  "data": [
+    {
+      "amount": "1000",
+      "category": "Opening",
+      "description": "Opening balance",
+      "reference": "OPENING",
+      "running_balance": "1000",
+      "transaction_date": "2025-10-11T06:13:00+00:00",
+      "transaction_id": "TXN-de94c7fe-96d1-472e-8571-189f601e7b75",
+      "transaction_type": "Credit"
+    },
+    {
+      "amount": "500",
+      "category": "Deposit",
+      "description": "Salary deposit",
+      "reference": "SAL-001",
+      "running_balance": "1500",
+      "transaction_date": "2025-10-11T06:13:00+00:00",
+      "transaction_id": "TXN-42ece8cf-7df8-4f63-b563-d97d46e7b820",
+      "transaction_type": "Credit"
+    },
+    {
+      "amount": "150",
+      "category": "Withdrawal",
+      "description": "Utility payment",
+      "reference": "UTIL-001",
+      "running_balance": "1350",
+      "transaction_date": "2025-10-11T06:13:00+00:00",
+      "transaction_id": "TXN-c3810919-77f8-4d68-a9f9-36fa95e593ab",
+      "transaction_type": "Debit"
+    },
+    {
+      "amount": "3",
+      "category": "Fee",
+      "description": "Transaction fee",
+      "reference": "UTIL-001",
+      "running_balance": "1347",
+      "transaction_date": "2025-10-11T06:13:00+00:00",
+      "transaction_id": "TXN-2a86072f-acfc-4973-b6bd-287cc7b7ef0c",
+      "transaction_type": "Debit"
+    },
+    {
+      "amount": "250",
+      "category": "Deposit",
+      "description": "Bonus payment",
+      "reference": "BONUS-001",
+      "running_balance": "1597",
+      "transaction_date": "2025-10-11T06:13:00+00:00",
+      "transaction_id": "TXN-ad45fe0a-1834-41b4-b90a-5379f1ceb625",
+      "transaction_type": "Credit"
+    },
+    {
+      "amount": "75.5",
+      "category": "Withdrawal",
+      "description": "Restaurant payment",
+      "reference": "REST-001",
+      "running_balance": "1521.5",
+      "transaction_date": "2025-10-11T06:13:00+00:00",
+      "transaction_id": "TXN-b889c699-f23e-4372-8a4b-9166f71af000",
+      "transaction_type": "Debit"
+    },
+    {
+      "amount": "3",
+      "category": "Fee",
+      "description": "Transaction fee",
+      "reference": "REST-001",
+      "running_balance": "1518.5",
+      "transaction_date": "2025-10-11T06:13:00+00:00",
+      "transaction_id": "TXN-14645e6b-6dde-40bf-bddd-ddf2667d2c47",
+      "transaction_type": "Debit"
+    },
+    {
+      "amount": "100",
+      "category": "Deposit",
+      "description": "Refund received",
+      "reference": "REF-001",
+      "running_balance": "1618.5",
+      "transaction_date": "2025-10-11T06:13:00+00:00",
+      "transaction_id": "TXN-02879a75-0144-456b-994b-dce5c9c6c9b5",
+      "transaction_type": "Credit"
+    }
+  ],
+  "error": null
+}
+
+
+################################################################################
+# FLOW SUMMARY
+################################################################################
+Customer ID: CUST-03c11180-3580-4762-9895-2fc464f5650f
+Account ID: ACC-2bebfbd9-878f-4c44-b617-66bd0dc4eba5
+Transactions Processed: 0
+Completion Time: 2025-10-11T09:13:01.041351
